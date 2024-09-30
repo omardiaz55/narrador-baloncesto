@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Jugadores de Baloncesto</title>
+    <style>
+        /* Estilos previos */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 2px solid #333;
+        }
+        th {
+            background-color: #333;
+            color: #fff;
+            font-size: 16px;
+            padding: 10px;
+        }
+        td {
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .minimalista {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+        .minimalista h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            table {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
+            button {
+                padding: 6px 10px;
+            }
+            input, select {
+                padding: 6px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Ficha de Jugadores de Baloncesto</h1>
+    
+    <div class="minimalista">
+        <h2>Ingreso de Datos de Jugadores</h2>
+        <div class="form-group">
+            <label for="nombre">Nombre del Jugador:</label>
+            <input type="text" id="nombre" placeholder="Nombre completo">
+        </div>
+        <div class="form-group">
+            <label for="numero">Número de Camiseta:</label>
+            <input type="number" id="numero" placeholder="Número">
+        </div>
+        <div class="form-group">
+            <label for="posicion">Posición del Jugador:</label>
+            <input type="text" id="posicion" placeholder="Posición (Ej: Base, Alero)">
+        </div>
+        <div class="form-group">
+            <label for="equipo">Equipo:</label>
+            <select id="equipo">
+                <option value="visitante">Equipo Visitante</option>
+                <option value="casa">Equipo en Casa</option>
+            </select>
+        </div>
+        <button onclick="agregarJugador()">Agregar Jugador</button>
+        <button onclick="borrarBaseDeDatos()">Borrar Base de Datos</button> <!-- Botón agregado -->
+    </div>
+
+    <div class="minimalista">
+        <h2>Modificar Jugadores en la Cancha</h2>
+        <div class="form-group">
+            <label for="jugadorVisitante">Seleccionar Jugador (Equipo Visitante):</label>
+            <select id="jugadorVisitante" onchange="cargarJugador('visitante')">
+                <option value="">Selecciona un jugador</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="jugadorCasa">Seleccionar Jugador (Equipo en Casa):</label>
+            <select id="jugadorCasa" onchange="cargarJugador('casa')">
+                <option value="">Selecciona un jugador</option>
+            </select>
+        </div>
+        
+        <button onclick="agregarJugadorCancha('visitante')">Agregar a la Cancha (Visitante)</button>
+        <button onclick="agregarJugadorCancha('casa')">Agregar a la Cancha (Casa)</button>
+    </div>
+
+    <div class="minimalista">
+        <h2>Jugadores en la Cancha</h2>
+        <div class="container">
+            <table id="tablaVisitante">
+                <thead>
+                    <tr>
+                        <th colspan="4">Equipo Visitante</th>
+                    </tr>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Número</th>
+                        <th>Posición</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <table id="tablaCasa">
+                <thead>
+                    <tr>
+                        <th colspan="4">Equipo en Casa</th>
+                    </tr>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Número</th>
+                        <th>Posición</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let jugadoresVisitante = JSON.parse(localStorage.getItem('jugadoresVisitante')) || [];
+        let jugadoresCasa = JSON.parse(localStorage.getItem('jugadoresCasa')) || [];
+        let jugadoresEnCanchaVisitante = [];
+        let jugadoresEnCanchaCasa = [];
+
+        function agregarJugador() {
+            const nombre = document.getElementById("nombre").value;
+            const numero = document.getElementById("numero").value;
+            const posicion = document.getElementById("posicion").value;
+            const equipo = document.getElementById("equipo").value;
+
+            if (nombre && numero && posicion) {
+                const jugador = { nombre, numero, posicion };
+                
+                if (equipo === "visitante") {
+                    jugadoresVisitante.push(jugador);
+                    localStorage.setItem('jugadoresVisitante', JSON.stringify(jugadoresVisitante));
+                } else {
+                    jugadoresCasa.push(jugador);
+                    localStorage.setItem('jugadoresCasa', JSON.stringify(jugadoresCasa));
+                }
+                
+                limpiarFormulario();
+                cargarJugadoresDropdowns();
+            } else {
+                alert("Por favor, completa todos los campos.");
+            }
+        }
+
+        function limpiarFormulario() {
+            document.getElementById("nombre").value = "";
+            document.getElementById("numero").value = "";
+            document.getElementById("posicion").value = "";
+        }
+
+        function cargarJugadoresDropdowns() {
+            const dropdownVisitante = document.getElementById("jugadorVisitante");
+            const dropdownCasa = document.getElementById("jugadorCasa");
+            dropdownVisitante.innerHTML = `<option value="">Selecciona un jugador</option>`;
+            dropdownCasa.innerHTML = `<option value="">Selecciona un jugador</option>`;
+
+            jugadoresVisitante.forEach((jugador, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = `${jugador.nombre} (#${jugador.numero})`;
+                dropdownVisitante.appendChild(option);
+            });
+
+            jugadoresCasa.forEach((jugador, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = `${jugador.nombre} (#${jugador.numero})`;
+                dropdownCasa.appendChild(option);
+            });
+        }
+
+        function cargarJugador(equipo) {
+            const select = equipo === "visitante" ? document.getElementById("jugadorVisitante") : document.getElementById("jugadorCasa");
+            const index = select.value;
+
+            if (index !== "") {
+                const jugador = equipo === "visitante" ? jugadoresVisitante[index] : jugadoresCasa[index];
+                document.getElementById("nombre").value = jugador.nombre;
+                document.getElementById("numero").value = jugador.numero;
+                document.getElementById("posicion").value = jugador.posicion;
+            }
+        }
+
+        function agregarJugadorCancha(equipo) {
+            const index = equipo === "visitante" ? document.getElementById("jugadorVisitante").value : document.getElementById("jugadorCasa").value;
+
+            if (index === "") {
+                alert("Selecciona un jugador.");
+                return;
+            }
+
+            const jugador = equipo === "visitante" ? jugadoresVisitante[index] : jugadoresCasa[index];
+            if (equipo === "visitante") {
+                if (jugadoresEnCanchaVisitante.length < 5 && !jugadoresEnCanchaVisitante.some(j => j.nombre === jugador.nombre)) {
+                    jugadoresEnCanchaVisitante.push(jugador);
+                } else {
+                    alert("El equipo visitante ya tiene 5 jugadores en la cancha o el jugador ya está en la cancha.");
+                }
+            } else {
+                if (jugadoresEnCanchaCasa.length < 5 && !jugadoresEnCanchaCasa.some(j => j.nombre === jugador.nombre)) {
+                    jugadoresEnCanchaCasa.push(jugador);
+                } else {
+                    alert("El equipo en casa ya tiene 5 jugadores en la cancha o el jugador ya está en la cancha.");
+                }
+            }
+
+            mostrarJugadoresEnCancha();
+        }
+
+        function mostrarJugadoresEnCancha() {
+            const tablaVisitante = document.querySelector("#tablaVisitante tbody");
+            const tablaCasa = document.querySelector("#tablaCasa tbody");
+            tablaVisitante.innerHTML = "";
+            tablaCasa.innerHTML = "";
+
+            jugadoresEnCanchaVisitante.forEach(jugador => {
+                const row = `<tr>
+                    <td>${jugador.nombre}</td>
+                    <td>${jugador.numero}</td>
+                    <td>${jugador.posicion}</td>
+                    <td><button onclick="eliminarJugador('visitante', '${jugador.nombre}')">Eliminar</button></td>
+                </tr>`;
+                tablaVisitante.innerHTML += row;
+            });
+
+            jugadoresEnCanchaCasa.forEach(jugador => {
+                const row = `<tr>
+                    <td>${jugador.nombre}</td>
+                    <td>${jugador.numero}</td>
+                    <td>${jugador.posicion}</td>
+                    <td><button onclick="eliminarJugador('casa', '${jugador.nombre}')">Eliminar</button></td>
+                </tr>`;
+                tablaCasa.innerHTML += row;
+            });
+        }
+
+        function eliminarJugador(equipo, nombre) {
+            if (equipo === "visitante") {
+                jugadoresEnCanchaVisitante = jugadoresEnCanchaVisitante.filter(j => j.nombre !== nombre);
+            } else {
+                jugadoresEnCanchaCasa = jugadoresEnCanchaCasa.filter(j => j.nombre !== nombre);
+            }
+            mostrarJugadoresEnCancha();
+        }
+
+        function borrarBaseDeDatos() {
+            localStorage.removeItem('jugadoresVisitante');
+            localStorage.removeItem('jugadoresCasa');
+            jugadoresVisitante = [];
+            jugadoresCasa = [];
+            jugadoresEnCanchaVisitante = [];
+            jugadoresEnCanchaCasa = [];
+            cargarJugadoresDropdowns();
+            mostrarJugadoresEnCancha();
+            alert("Base de datos borrada.");
+        }
+
+        // Inicializar los dropdowns de jugadores
+        cargarJugadoresDropdowns();
+    </script>
+
+</body>
+</html>
